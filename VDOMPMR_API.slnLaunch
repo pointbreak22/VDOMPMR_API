@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "старт",
+    "Projects": [
+      {
+        "Path": "Identity\\Identity.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "WebApi\\WebApi.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  }
+]
