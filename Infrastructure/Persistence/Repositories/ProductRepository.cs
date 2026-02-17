@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Domain.Entities;
+using Infrastructure.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories
@@ -40,6 +41,23 @@ namespace Infrastructure.Persistence.Repositories
         public void Update(Product product)
         {
             _context.Set<Product>().Update(product);
+        }
+
+        public async Task<(List<Product> Items, int TotalCount)> GetPagedProductsAsync(int pageNumber, int pageSize, CancellationToken ct)
+        {
+            var query = _context.Products
+                .AsNoTracking()
+                .Include(p => p.Parameters);
+
+            var totalCount = await query.CountAsync(ct);
+
+            var items = await query
+                .OrderBy(p => p.Name) // ОБЯЗАТЕЛЬНО добавьте сортировку
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(ct);
+
+            return (items, totalCount);
         }
     }
 }

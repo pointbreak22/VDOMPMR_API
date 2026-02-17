@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Application.Common.Interfaces;
+using Infrastructure.Persistence.Data;
+using Infrastructure.Persistence.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Application.Common.Interfaces;
-using Infrastructure.Persistence;
 
 namespace Infrastructure
 {
@@ -21,8 +22,9 @@ namespace Infrastructure
             services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
 
             // Регистрация репозиториев
-            services.AddScoped<Application.Common.Interfaces.IUserRepository, Infrastructure.Persistence.Repositories.UserRepository>();
-            services.AddScoped<Application.Common.Interfaces.IProductRepository, Infrastructure.Persistence.Repositories.ProductRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IProductRepository,ProductRepository>();
+            services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();
 
             return services;
         }

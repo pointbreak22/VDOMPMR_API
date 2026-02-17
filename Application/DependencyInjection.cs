@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using Application.Common.Interfaces;
+using FluentValidation;
 using MediatR;
 using MediatR.Extensions.FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,9 @@ namespace Application
 
             // Регистрируем AutoMapper
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
+
+
+            
 
             return services;
         }

@@ -1,8 +1,9 @@
 ﻿using Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
+using Infrastructure.Persistence.Seeds;
 
-namespace Infrastructure.Persistence
+namespace Infrastructure.Persistence.Data
 {
     public class ApplicationDbContext : DbContext, IApplicationDbContext
     {

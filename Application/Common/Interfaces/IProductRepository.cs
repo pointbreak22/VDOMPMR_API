@@ -13,5 +13,7 @@ namespace Application.Common.Interfaces
         Task AddAsync(Product product, CancellationToken cancellationToken);
         void Update(Product product);
         void Remove(Product product);
+
+        Task<(List<Product> Items, int TotalCount)> GetPagedProductsAsync(int pageNumber, int pageSize, CancellationToken ct);
     }
 }

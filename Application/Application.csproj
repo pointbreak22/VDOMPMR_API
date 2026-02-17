@@ -21,7 +21,6 @@
   <ItemGroup>
     <Folder Include="Abstractions\" />
     <Folder Include="UseCases\" />
-    <Folder Include="DTOs\" />
     <Folder Include="Validators\" />
     <Folder Include="Mappers\" />
     <Folder Include="Behaviors\" />

@@ -1,10 +1,13 @@
 using Application;
 using Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
 using Scalar.AspNetCore;
+using WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,12 +32,49 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 // Identity server registration moved to Identity/DependencyInjection
 
-builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:4200") // URL вашего Angular
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Добавьте это обязательно!
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {
+    options.AddOperationTransformer((operation, context, cancellationToken) =>
+    {
+        if (context.Description.ActionDescriptor is ControllerActionDescriptor actionDescriptor)
+        {
+            var hasAllowAnonymous = actionDescriptor.MethodInfo.GetCustomAttributes(typeof(AllowAnonymousAttribute), true).Any()
+                                 || actionDescriptor.ControllerTypeInfo.GetCustomAttributes(typeof(AllowAnonymousAttribute), true).Any();
+
+            if (hasAllowAnonymous)
+            {
+                // ИСПРАВЛЕНИЕ: Инициализируем список, если он null, перед очисткой
+                operation.Security ??= new List<OpenApiSecurityRequirement>();
+                operation.Security.Clear();
+            }
+        }
+        return Task.CompletedTask;
+    });
+
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
+
+
+
         document.Info.Title = "VDOMPMR API";
         document.Info.Version = "v1";
         document.Info.Description = "API для работы с VDOMPMR";
@@ -81,6 +121,7 @@ builder.Services.AddOpenApi(options =>
 });
 
 var app = builder.Build();
+app.UseExceptionHandler(); // Это активирует ваш GlobalExceptionHandler
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -90,6 +131,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();

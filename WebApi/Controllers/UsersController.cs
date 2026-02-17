@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using MediatR;
 using Application.Features.Users.Queries;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace WebApi.Controllers
@@ -17,6 +18,9 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> Get()
         {
             var users = await _mediator.Send(new GetUsersQuery());
