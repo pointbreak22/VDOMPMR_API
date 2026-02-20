@@ -20,26 +20,30 @@ namespace Identity
                 .AddDefaultTokenProviders();
 
             services.AddOpenIddict()
-                .AddCore(options =>
-                {
-                    options.UseEntityFrameworkCore().UseDbContext<AppIdentityDbContext>();
-                })
-                .AddServer(options =>
-                {
-                    options.SetTokenEndpointUris("/connect/token");
-                    options.SetAuthorizationEndpointUris("/connect/authorize");
-                    options.AllowPasswordFlow()
-                           .AllowAuthorizationCodeFlow()
-                           .RequireProofKeyForCodeExchange();
-                    options.AddDevelopmentEncryptionCertificate()
-                           .AddDevelopmentSigningCertificate();
-                    options.UseAspNetCore().EnableTokenEndpointPassthrough();
-                })
-                .AddValidation(options =>
-                {
-                    options.UseLocalServer();
-                    options.UseAspNetCore();
-                });
+     .AddCore(options =>
+     {
+         options.UseEntityFrameworkCore()
+                .UseDbContext<AppIdentityDbContext>();
+     })
+     .AddServer(options =>
+     {
+         options.SetTokenEndpointUris("/connect/token");
+         options.AllowPasswordFlow(); // нужен для Angular SPA
+         options.AllowRefreshTokenFlow(); // если хочешь refresh tokens
+         options.AcceptAnonymousClients(); // ← ОБЯЗАТЕЛЬНО для SPA
+         options.RegisterScopes("openid", "email", "roles", "resource_api");
+
+         options.AddDevelopmentEncryptionCertificate()
+                .AddDevelopmentSigningCertificate();
+
+         options.UseAspNetCore()
+                .EnableTokenEndpointPassthrough().EnableAuthorizationEndpointPassthrough();
+     })
+     .AddValidation(options =>
+     {
+         options.UseLocalServer();
+         options.UseAspNetCore();
+     });
 
             return services;
         }
