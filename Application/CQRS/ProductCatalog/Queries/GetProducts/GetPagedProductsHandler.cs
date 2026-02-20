@@ -3,9 +3,6 @@ using Application.Common.Models;
 using Application.CQRS.ProductCatalog.Dtos;
 using Application.CQRS.ProductCatalog.DTOs;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Application.CQRS.ProductCatalog.Queries.GetProducts
 {

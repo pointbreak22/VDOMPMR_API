@@ -3,7 +3,6 @@ using Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
 using Scalar.AspNetCore;
@@ -12,7 +11,8 @@ using WebApi;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options => {
+    .AddJwtBearer(options =>
+    {
         options.Authority = "https://localhost:5001"; // URL вашего Identity проекта
         options.Audience = "resource_api";
         options.RequireHttpsMetadata = false;
@@ -32,13 +32,16 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 // Identity server registration moved to Identity/DependencyInjection
 
+
+var MyAllowSpecificOrigins = "AllowAngularSPA";
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy(MyAllowSpecificOrigins, policy =>
     {
         policy.WithOrigins("http://localhost:4200") // URL вашего Angular
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyHeader()                               
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -132,7 +135,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors();
+app.UseCors(MyAllowSpecificOrigins);
 
 app.UseAuthentication();
 app.UseAuthorization();

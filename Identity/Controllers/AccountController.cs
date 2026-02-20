@@ -1,7 +1,12 @@
 using Identity.Requests;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using OpenIddict.Abstractions;
+using OpenIddict.Server.AspNetCore;
 using System.Security.Claims;
+using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace Identity.Controllers
 {
@@ -27,30 +32,33 @@ namespace Identity.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterRequest model)
         {
             if (model == null || string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password))
-                return BadRequest("Данные не заполнены");
+                return BadRequest(new { message = "Данные не заполнены" });
 
-            // Используем Email как UserName, если Login пустой
+            // 🔹 Login = Email, если Login пустой
             var userName = string.IsNullOrEmpty(model.Login) ? model.Email : model.Login;
+
+            // Проверяем, существует ли уже пользователь
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+                return BadRequest(new { message = "Пользователь с таким email уже существует" });
 
             var user = new ApplicationUser { UserName = userName, Email = model.Email };
             var result = await _userManager.CreateAsync(user, model.Password);
 
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
-                string roleName = (model.Email == "admin@admin.com") ? "Admin" : "user";
-
-                // Используй _roleManager, который ты уже внедрил в конструктор!
-                if (!await _roleManager.RoleExistsAsync(roleName))
-                {
-                    await _roleManager.CreateAsync(new IdentityRole(roleName));
-                }
-
-                await _userManager.AddToRoleAsync(user, roleName);
-                return Ok();
+                var errors = result.Errors.Select(e => e.Description).ToList();
+                return BadRequest(new { message = "Ошибка регистрации", errors });
             }
 
-            // Если ошибка в пароле или почте, вернем 400 вместо 500
-            return BadRequest(result.Errors);
+            string roleName = (model.Email == "admin@admin.com") ? "Admin" : "User";
+
+            if (!await _roleManager.RoleExistsAsync(roleName))
+                await _roleManager.CreateAsync(new IdentityRole(roleName));
+
+            await _userManager.AddToRoleAsync(user, roleName);
+
+            return Ok(new { message = "Регистрация прошла успешно", email = user.Email, role = roleName });
         }
 
         // POST: api/account/login
@@ -68,10 +76,12 @@ namespace Identity.Controllers
             if (!result.Succeeded)
                 return Unauthorized("Invalid login or password");
 
-            // Здесь можно выдать токен через OpenIddict (password flow)
-            // Обычно клиент делает отдельный запрос на /connect/token
-            return Ok();
+            // 🔹 Создаём cookie для OpenIddict
+            await _signInManager.SignInAsync(user, isPersistent: true);
+
+            return Ok(new { message = "Login successful" });
         }
+
 
         //// GET: api/account/external-login/google
         //[HttpGet("external-login/google")]

@@ -23,7 +23,7 @@ namespace Infrastructure
 
             // Регистрация репозиториев
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IProductRepository,ProductRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();
 
             return services;

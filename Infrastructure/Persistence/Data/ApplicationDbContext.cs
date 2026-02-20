@@ -1,7 +1,7 @@
 ﻿using Application.Common.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
 using Infrastructure.Persistence.Seeds;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Data
 {

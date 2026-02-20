@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -24,46 +23,49 @@ public class AuthorizationController : ControllerBase
         _userManager = userManager;
     }
 
-    [HttpPost("~/connect/token")]
-    public async Task<IActionResult> Exchange()
+
+
+    [HttpGet("~/connect/authorize")]
+    public async Task<IActionResult> Authorize()
     {
         var request = HttpContext.GetOpenIddictServerRequest();
 
-        if (request.IsPasswordGrantType())
+        if (!User.Identity!.IsAuthenticated)
         {
-            var user = await _userManager.FindByNameAsync(request.Username);
-
-            if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
-                return Forbid();
-
-            var identity = new ClaimsIdentity(
-                TokenValidationParameters.DefaultAuthenticationType,
-                Claims.Name,
-                Claims.Role);
-
-            // 🔥 ОБЯЗАТЕЛЬНО
-            identity.AddClaim(Claims.Subject, user.Id);
-
-            // имя
-            identity.AddClaim(Claims.Name, user.UserName);
-
-            // роли
-            var roles = await _userManager.GetRolesAsync(user);
-            foreach (var role in roles)
-            {
-                identity.AddClaim(Claims.Role, role);
-            }
-
-            var principal = new ClaimsPrincipal(identity);
-
-            principal.SetScopes(request.GetScopes());
-            principal.SetResources("resource_api");
-
-            return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+            return Challenge(
+                IdentityConstants.ApplicationScheme);
         }
 
-        throw new InvalidOperationException("Grant type not supported.");
+        var user = await _userManager.GetUserAsync(User);
+
+        var identity = new ClaimsIdentity(
+            TokenValidationParameters.DefaultAuthenticationType,
+            Claims.Name,
+            Claims.Role);
+
+        identity.AddClaim(Claims.Subject, user!.Id);
+        identity.AddClaim(Claims.Name, user.UserName!);
+
+        var roles = await _userManager.GetRolesAsync(user);
+        foreach (var role in roles)
+        {
+            identity.AddClaim(Claims.Role, role);
+        }
+
+        var principal = new ClaimsPrincipal(identity);
+
+        principal.SetScopes(request!.GetScopes());
+        principal.SetResources("resource_api");
+
+        foreach (var claim in principal.Claims)
+        {
+            claim.SetDestinations(Destinations.AccessToken);
+        }
+
+        return SignIn(principal,
+            OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
     }
+
 
     private static IEnumerable<string> GetDestinations(System.Security.Claims.Claim claim, string[] scopes)
     {

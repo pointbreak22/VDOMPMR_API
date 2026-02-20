@@ -9,7 +9,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace WebApi.Controllers
 {
     [ApiController]
-    [AllowAnonymous]         
+    [AllowAnonymous]
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {

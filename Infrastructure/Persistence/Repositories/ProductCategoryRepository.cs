@@ -2,13 +2,10 @@
 using Domain.Entities;
 using Infrastructure.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Infrastructure.Persistence.Repositories
 {
-    public class ProductCategoryRepository  : IProductCategoryRepository
+    public class ProductCategoryRepository : IProductCategoryRepository
     {
         private readonly ApplicationDbContext _context;
 

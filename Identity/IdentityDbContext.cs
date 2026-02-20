@@ -15,6 +15,6 @@ namespace Identity
         public DbSet<OpenIddictEntityFrameworkCoreToken> OpenIddictTokens => Set<OpenIddictEntityFrameworkCoreToken>();
     }
 
-   
+
 
 }

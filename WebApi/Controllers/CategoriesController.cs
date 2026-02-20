@@ -10,7 +10,7 @@ namespace WebApi.Controllers
 
     [ApiController]
     [AllowAnonymous]
-    [Route("api/[controller]")]    
+    [Route("api/[controller]")]
     public class CategoriesController : ControllerBase
     {
         private readonly IMediator _mediator;

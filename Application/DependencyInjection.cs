@@ -1,6 +1,4 @@
-﻿using Application.Common.Interfaces;
-using FluentValidation;
-using MediatR;
+﻿using FluentValidation;
 using MediatR.Extensions.FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -14,7 +12,8 @@ namespace Application
             // Регистрируем валидаторы и MediatR (CQRS)
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-            services.AddMediatR(cfg => {
+            services.AddMediatR(cfg =>
+            {
                 cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
                 cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
             });
@@ -23,7 +22,7 @@ namespace Application
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
 
-            
+
 
             return services;
         }

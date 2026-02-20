@@ -1,7 +1,4 @@
 ﻿using Application.CQRS.ProductCatalog.Dtos;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Application.CQRS.ProductCatalog.DTOs
 {

@@ -45,30 +45,38 @@ public static class DbInitializer
         }
 
         // 3️⃣ OpenIddict Client
-       if (await appManager.FindByClientIdAsync("angular_spa") == null)
-{
-    await appManager.CreateAsync(new OpenIddictApplicationDescriptor
-    {
-        ClientId = "angular_spa",
-        DisplayName = "Angular SPA",
-
-        Permissions =
+        if (await appManager.FindByClientIdAsync("angular_spa") == null)
         {
-            // endpoints
-            Permissions.Endpoints.Token,
+            await appManager.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = "angular_spa",
+                DisplayName = "Angular SPA",
 
-            // grant types
-            Permissions.GrantTypes.Password,
-            Permissions.GrantTypes.RefreshToken,
+                RedirectUris =           
+                {                                                     
+                    new Uri("http://localhost:4200/auth/callback") 
+                },
+                Permissions =             
+                {
+                 // endpoints
+                    Permissions.Endpoints.Authorization,
+                    Permissions.Endpoints.Token,
 
-            // scopes ❗ ВАЖНО
-            Permissions.Prefixes.Scope + Scopes.OpenId,
-            Permissions.Prefixes.Scope + Scopes.Email,
-            Permissions.Prefixes.Scope + Scopes.Roles,
-            Permissions.Prefixes.Scope + "resource_api"
-        }
-    });
-}
+                    // grant types
+                    Permissions.GrantTypes.AuthorizationCode,
+
+                    // PKCE
+                    Permissions.ResponseTypes.Code,
+
+                    // scopes
+                    Permissions.Prefixes.Scope + Scopes.OpenId,
+                    Permissions.Prefixes.Scope + Scopes.Profile,
+                    Permissions.Prefixes.Scope + Scopes.Email,
+                    Permissions.Prefixes.Scope + Scopes.Roles,
+                    Permissions.Prefixes.Scope + "resource_api"
+                }
+            });
         }
     }
+}
 

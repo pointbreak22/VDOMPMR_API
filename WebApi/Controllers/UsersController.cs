@@ -2,7 +2,6 @@ using Application.Features.Users.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace WebApi.Controllers
 {
