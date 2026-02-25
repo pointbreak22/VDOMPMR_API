@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -26,24 +27,30 @@ public class AuthorizationController : ControllerBase
 
 
     [HttpGet("~/connect/authorize")]
+    [HttpPost("~/connect/authorize")]
+    [IgnoreAntiforgeryToken] // Важно для кросс-доменных POST запросов
     public async Task<IActionResult> Authorize()
     {
-        var request = HttpContext.GetOpenIddictServerRequest();
+        var request = HttpContext.GetOpenIddictServerRequest() ??
+            throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
 
-        if (!User.Identity!.IsAuthenticated)
+        // Проверяем куку Identity
+        var result = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+
+        if (!result.Succeeded || result.Principal == null)
         {
-            return Challenge(
-                IdentityConstants.ApplicationScheme);
+            return Challenge(IdentityConstants.ApplicationScheme);
         }
 
-        var user = await _userManager.GetUserAsync(User);
+        var user = await _userManager.GetUserAsync(result.Principal) ??
+            throw new InvalidOperationException("The user details cannot be retrieved.");
 
         var identity = new ClaimsIdentity(
             TokenValidationParameters.DefaultAuthenticationType,
             Claims.Name,
             Claims.Role);
 
-        identity.AddClaim(Claims.Subject, user!.Id);
+        identity.AddClaim(Claims.Subject, user.Id);
         identity.AddClaim(Claims.Name, user.UserName!);
 
         var roles = await _userManager.GetRolesAsync(user);
@@ -53,39 +60,75 @@ public class AuthorizationController : ControllerBase
         }
 
         var principal = new ClaimsPrincipal(identity);
-
-        principal.SetScopes(request!.GetScopes());
+        principal.SetScopes(request.GetScopes());
         principal.SetResources("resource_api");
 
         foreach (var claim in principal.Claims)
         {
-            claim.SetDestinations(Destinations.AccessToken);
+            claim.SetDestinations(GetDestinations(claim, principal.GetScopes().ToArray()));
         }
 
-        return SignIn(principal,
-            OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+        return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+    }
+    // 🔴 ДОБАВЛЯЕМ ЭТОТ МЕТОД 🔴
+    [HttpPost("~/connect/token")]
+    [IgnoreAntiforgeryToken]
+    [Produces("application/json")]
+    // [FromForm] позволяет [ApiController] правильно прочитать OAuth2 параметры
+    public async Task<IActionResult> Exchange()
+    {
+        var request = HttpContext.GetOpenIddictServerRequest() ??
+            throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
+
+        if (request.IsAuthorizationCodeGrantType() || request.IsRefreshTokenGrantType())
+        {
+            var result = await HttpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+
+            if (result.Principal == null)
+            {
+                return Forbid(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+            }
+
+            //var identity = new ClaimsIdentity(result.Principal.Claims, TokenValidationParameters.DefaultAuthenticationType);
+            var principal = result.Principal;
+           
+
+            foreach (var claim in principal.Claims)
+            {
+                claim.SetDestinations(GetDestinations(claim, principal.GetScopes().ToArray()));
+            }
+
+            return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+        }
+
+        return BadRequest(new { error = Errors.UnsupportedGrantType });
     }
 
-
-    private static IEnumerable<string> GetDestinations(System.Security.Claims.Claim claim, string[] scopes)
+    private static IEnumerable<string> GetDestinations(Claim claim, string[] scopes)
     {
         switch (claim.Type)
         {
             case Claims.Name:
             case Claims.Subject:
-                return new[] { Destinations.AccessToken };
-
-            case Claims.Email:
-                if (scopes.Contains(Scopes.Email))
-                    return new[] { Destinations.AccessToken };
-                break;
+                yield return Destinations.AccessToken;
+                yield return Destinations.IdentityToken;
+                yield break;
 
             case Claims.Role:
+                yield return Destinations.AccessToken;
                 if (scopes.Contains(Scopes.Roles))
-                    return new[] { Destinations.AccessToken };
-                break;
-        }
+                    yield return Destinations.IdentityToken;
+                yield break;
 
-        return new[] { Destinations.AccessToken };
+            case Claims.Email:
+                yield return Destinations.AccessToken;
+                if (scopes.Contains(Scopes.Email))
+                    yield return Destinations.IdentityToken;
+                yield break;
+
+            default:
+                yield return Destinations.AccessToken;
+                yield break;
+        }
     }
 }

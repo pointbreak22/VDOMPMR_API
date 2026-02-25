@@ -61,6 +61,16 @@ namespace Identity.Controllers
             return Ok(new { message = "Регистрация прошла успешно", email = user.Email, role = roleName });
         }
 
+
+        // Внутри AccountController
+        [HttpGet("login")]
+        public IActionResult Login(string returnUrl)
+        {
+            // Перенаправляем на Angular страницу логина, сохраняя ReturnUrl
+            var angularLoginUrl = $"http://localhost:4200/login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+            return Redirect(angularLoginUrl);
+        }
+
         // POST: api/account/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)

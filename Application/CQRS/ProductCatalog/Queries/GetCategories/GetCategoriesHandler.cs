@@ -1,35 +1,43 @@
 ﻿using Application.Common.Interfaces;
 using Application.Common.Models;
 using Application.CQRS.ProductCatalog.Dtos;
+using Domain.Entities;
 using MediatR;
 
 namespace Application.CQRS.ProductCatalog.Queries.GetCategories
 {
     public class GetCategoriesHandler : IRequestHandler<GetCategoriesQuery, Result<List<CategoryDto>>>
     {
-        private readonly IProductCategoryRepository _repository;
+        private readonly ICategoryRepository _repository;
 
-        public GetCategoriesHandler(IProductCategoryRepository repository) => _repository = repository;
+        public GetCategoriesHandler(ICategoryRepository repository) => _repository = repository;
 
         public async Task<Result<List<CategoryDto>>> Handle(GetCategoriesQuery request, CancellationToken ct)
         {
-            // 1. Получаем данные через репозиторий (Infrastructure)
             var categories = await _repository.GetCategoriesWithDetailsAsync(ct);
 
-            // 2. Маппим сущности в DTO (Application)
-            var dtos = categories.Select(c => new CategoryDto(
-                c.Id,
-                c.Name,
-                c.Products.SelectMany(p => p.Parameters)
-                    .Select(param => new ParameterDto(
-                        param.Id,
-                        param.Type.ToString(),
-                        param.Value,
-                        param.Stock))
-                    .ToList()
-            )).ToList();
+            var tree = BuildTree(categories);
 
-            return Result<List<CategoryDto>>.Success(dtos);
+            return Result<List<CategoryDto>>.Success(tree);
+        }
+
+        private List<CategoryDto> BuildTree(List<Category> categories, Guid? parentId = null)
+        {
+            return categories
+                .Where(c => c.ParentId == parentId)
+                .Select(c => new CategoryDto(
+                    c.Id,
+                    c.Name,
+                    c.Products.SelectMany(p => p.Parameters)
+                        .Select(param => new ParameterDto(
+                            param.Id,
+                            param.Type.ToString(),
+                            param.Value,
+                            param.Stock))
+                        .ToList(),
+                    BuildTree(categories, c.Id)
+                ))
+                .ToList();
         }
     }
 }

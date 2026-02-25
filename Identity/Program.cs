@@ -1,4 +1,5 @@
 using Identity;
+using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 
 
@@ -20,7 +21,13 @@ builder.Services.AddCors(options =>
 });
 
 // 2. Настройка Google (обязательно!)
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication(options =>
+{
+    // Указываем, что по умолчанию проверяем куку Identity
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+});
 //.AddGoogle(options =>
 //{
 //    options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;

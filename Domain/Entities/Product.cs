@@ -1,11 +1,6 @@
 namespace Domain.Entities
 {
-    public enum GenderType
-    {
-        Male,
-        Female,
-        Child
-    }
+  
 
     public enum UnitType
     {
@@ -21,12 +16,9 @@ namespace Domain.Entities
 
         // Категория
         public Guid CategoryId { get; set; }
-        public ProductCategory Category { get; set; } = null!;
+        public Category Category { get; set; } = null!;
 
-        // Подкатегория (может быть null)
-        public Guid? SubcategoryId { get; set; }
-        public ProductSubcategory? Subcategory { get; set; }
-
+                                                                  
         public decimal PricePerItem { get; set; }
         public int Quantity { get; set; }
         public decimal PricePerPack { get; set; }

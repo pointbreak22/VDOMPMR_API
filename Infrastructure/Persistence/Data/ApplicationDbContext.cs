@@ -16,7 +16,7 @@ namespace Infrastructure.Persistence.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Product> Products => Set<Product>();
         public DbSet<ProductParameter> ProductParameters => Set<ProductParameter>();
-        public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+        public DbSet<Category> Categories => Set<Category>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,34 +34,25 @@ namespace Infrastructure.Persistence.Data
                 .HasForeignKey(pp => pp.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Связь ProductCategory -> Product (один ко многим)
-            modelBuilder.Entity<ProductCategory>()
+            // 🔹 Category self-reference (Parent-Children)
+            modelBuilder.Entity<Category>()
+                .HasOne(c => c.Parent)
+                .WithMany(c => c.Children)
+                .HasForeignKey(c => c.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            // 🔹 Category -> Product (1:M)
+            modelBuilder.Entity<Category>()
                 .HasMany(c => c.Products)
                 .WithOne(p => p.Category)
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            // Связь ProductCategory -> ProductSubcategory (один ко многим)
-            modelBuilder.Entity<ProductCategory>()
-                .HasMany(c => c.Products)
-                .WithOne(p => p.Category)
-                .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<ProductCategory>()
-                .HasMany(c => c.Subcategories)
-                .WithOne(sc => sc.Category)
-                .HasForeignKey(sc => sc.CategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<ProductSubcategory>()
-                .HasMany(sc => sc.Products)
-                .WithOne(p => p.Subcategory)
-                .HasForeignKey(p => p.SubcategoryId)
-                .OnDelete(DeleteBehavior.SetNull);
+                                                                 
+         
 
             // Seed категорий
-            ProductCategorySeed.Seed(modelBuilder);
+            CategorySeed.Seed(modelBuilder);
 
             // Глобальное преобразование имён в snake_case
             modelBuilder.UseSnakeCaseNames();

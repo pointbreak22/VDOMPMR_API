@@ -12,6 +12,5 @@ namespace Application.CQRS.ProductCatalog.DTOs
     int ItemsPerPack,
     string Unit, // Передаем название Piece/Pair
     Guid CategoryId,
-    Guid? SubcategoryId,
     List<ParameterDto> Parameters);
 }

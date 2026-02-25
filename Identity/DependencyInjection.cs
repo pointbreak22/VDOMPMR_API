@@ -22,9 +22,32 @@ namespace Identity
 
             services.ConfigureApplicationCookie(options =>
             {
-                options.Cookie.HttpOnly = true;
-                options.Cookie.SameSite = SameSiteMode.None; // критично для localhost + cross-site
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // обязательно для SameSite=None
+                options.Cookie.Name = "AUTH_SESSION"; // Понятное имя
+                options.Cookie.HttpOnly = true;       // JS не видит куку (безопасно)
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                options.Cookie.Path = "/";
+
+
+              
+
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    // Если запрос идет к эндпоинтам OpenIddict, не нужно принудительно ставить 401,
+                    // иначе механизм Challenge в контроллере не сработает.
+                    // Если это API запрос (начинается с /api или /connect)
+                    if (context.Request.Path.StartsWithSegments("/api") ||
+                        context.Request.Path.StartsWithSegments("/connect"))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    }
+                    else
+                    {
+                        // Позволяем стандартный редирект для эндпоинтов авторизации
+                        context.Response.Redirect(context.RedirectUri);
+                    }
+                    return Task.CompletedTask;
+                };
             });
 
             services.AddOpenIddict()  
@@ -51,9 +74,11 @@ namespace Identity
                         "resource_api"); 
                     options.AddDevelopmentEncryptionCertificate()   
                     .AddDevelopmentSigningCertificate();   
+                   
                     options.UseAspNetCore()             
                     .EnableTokenEndpointPassthrough()      
-                    .EnableAuthorizationEndpointPassthrough();  
+                    .EnableAuthorizationEndpointPassthrough()
+                    .EnableStatusCodePagesIntegration(); // Помогает корректно пробрасывать 401/404
                 })                                 
                 .AddValidation(options =>        
                 {                                   

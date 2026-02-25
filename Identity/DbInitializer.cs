@@ -52,6 +52,8 @@ public static class DbInitializer
                 ClientId = "angular_spa",
                 DisplayName = "Angular SPA",
 
+                ClientType = ClientTypes.Public,
+
                 RedirectUris =           
                 {                                                     
                     new Uri("http://localhost:4200/auth/callback") 

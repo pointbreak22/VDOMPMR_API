@@ -2,9 +2,9 @@
 
 namespace Application.Common.Interfaces
 {
-    public interface IProductCategoryRepository
+    public interface ICategoryRepository
     {
         // Метод возвращает сущности с уже подгруженными связями
-        Task<List<ProductCategory>> GetCategoriesWithDetailsAsync(CancellationToken ct);
+        Task<List<Category>> GetCategoriesWithDetailsAsync(CancellationToken ct);
     }
 }

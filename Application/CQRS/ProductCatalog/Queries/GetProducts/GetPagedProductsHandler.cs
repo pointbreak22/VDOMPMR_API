@@ -34,7 +34,7 @@ namespace Application.CQRS.ProductCatalog.Queries.GetProducts
                 p.ItemsPerPack,
                 p.Unit.ToString(),
                 p.CategoryId,
-                p.SubcategoryId,
+          
                 p.Parameters.Select(param => new ParameterDto(
                     param.Id,
                     param.Type.ToString(),
